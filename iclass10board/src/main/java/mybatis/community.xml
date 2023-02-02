@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ <mapper namespace="community">
+ 	<!-- insert,update,delete 는 자동으로 return 값이 생깁니다. -->
+ 	<!-- 오라클은 idx를 시퀀스를 이용하여 값을 만듭니다. useGeneratedKeys ="false" -->
+ 	<insert id="insert" parameterType="org.iclass.vo.Community" useGeneratedKeys="true" >
+ 		INSERT INTO community
+ 			(idx,writer,title,content,ip) 
+		VALUES 
+			(community_idx_seq.nextval,#{writer},#{title},#{content},#{ip})
+		<!-- insert 후에 증가된 시퀀스값 (현재값) 가져오기 : idx 필드에 저장하기-->	
+		<!-- nextval-다음 시퀀스 값
+		currval 은 받고 나서 다음 시퀀스 값을 얘기합니다. -->
+		<selectKey keyProperty="idx" resultType="long" order="AFTER">
+			SELECT community_idx_seq.currval 
+			FROM dual
+		</selectKey>	
+		<!-- mysql은 autoincrement 속성 설정하므로
+		useGeneratedKeys="true" 가 됩니다 (시퀀스를 사용하지 않기 떄문에)
+	<insert id="insert" parameterType="org.iclass.vo.Community" 
+ 		keyProperty="idx" keyColumn="idx" useGeneratedKeys="true" >		
+		 -->
+		<!-- keyProperty = 객체의 프로퍼티를 말 한 것입니다.(객체의 특정한 변수값)  -->
+		<!-- KeyColumn 은 sql의 컬럼을 얘기하는 것입니다. -->
+ 	</insert>  
+ 	<!-- null 허용한 컬럼은 타입을 알려주어 NULL 이 입력되도록 한다. -->
+ 	
+ 	<update id="update" parameterType="org.iclass.vo.Community">
+	 	UPDATE community
+		SET 
+			title=#{title}, content=#{content} ,ip=#{ip}
+		WHERE idx=#{idx}
+ 	</update>
+ 	
+ 	<delete id="delete" parameterType="long">
+ 		DELETE FROM 
+ 			community 
+ 		WHERE 
+ 			idx=#{idx}
+ 	</delete>
+ 	<!-- 커뮤니티 객체에 담습니다 parameter은 입력값 result는 결과값 값에대한 데이터타입 지정  -->
+ 	<select id="selectByIdx" parameterType="long" resultType="org.iclass.vo.Community">
+ 		SELECT * 
+ 		FROM 
+ 			community 
+ 		WHERE 
+ 			idx=#{idx}   <!-- PK로 조회 -->
+ 	</select>
+ 	<!-- select 기본으로 리턴해주는 타입 int  -->
+ 	<select id="count" parameterType="int">	
+ 	SELECT count(*) FROM community;
+ 	</select>
+ 	<!-- 메인 글 mref의 댓글 행 개수 조회  -->
+ 	<select id="commentsCount" parameterType="int">
+ 	SELECT * FROM communityComments  WHERE mref=#{mref} 	
+ 	</select>
+ 	<!-- 조회수 업데이트 (증가) -->
+	<update id="setReadCount" parameterType="long">
+	UPDATE community
+	SET READCOUNT = READCOUNT+1
+	WHERE idx = #{idx}			
+	</update>
+	<update id="setCommentCount" parameterType="long" >
+	UPDATE community
+	SET COMMENTCOUNT = 	
+    (SELECT count(*) FROM COMMENTS  WHERE mref={#idx})		<!--mref와 idx 참조관계   -->
+	WHERE idx ={#idx}
+	</update>
+	<select id="contentRead" parameterType="long" resultType="org.iclass.vo.Community">
+	select * from community content where idx=#{idx}
+	</select>
+	<select id="maxOf" resultType="int">
+ 		SELECT max(idx) FROM community 
+ 	</select>
+ 	<!--  mref 메인글의 댓글목록 가져오기  -->
+ 	<select id="comments" parameterType="long" resultType="org.iclass.vo.CommunityComments">
+ 		SELECT * 
+ 		FROM communityComments 
+ 		WHERE 
+ 			mref=#{mref}
+ 	</select>
+ 	<!-- 메인글 목록 가져오기 - 할일 : 한번에(즉 한페이지에) 글 10개씩 가져오도록 변경   -->
+ 	<select id="list" resultType="org.iclass.vo.Community">
+ 	SELECT * FROM community
+ 	</select>
+ </mapper>
+ 
